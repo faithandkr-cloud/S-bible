@@ -1,0 +1,1896 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>성경읽기</title>
+<link rel="stylesheet" href="./common.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;800&family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;800&family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet"></noscript>
+<style>
+:root{
+  --bg: #F7F3EA;
+  --bg-elevated: #FFFDF8;
+  --ink: #2A2823;
+  --ink-soft: #6B6558;
+  --line: #E6DFCE;
+  --navy: #1B2A52;
+  --navy-soft: #3A4B7A;
+  --gold: #A8823C;
+  --gold-bg: #FBF0D9;
+  --danger: #B34A3C;
+  --font-serif: 'Noto Serif KR', serif;
+  --font-sans: 'Noto Sans KR', -apple-system, 'Malgun Gothic', sans-serif;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; padding:0; height:100%; background:var(--bg); color:var(--ink); font-family:var(--font-sans); overflow:hidden;}
+button{font-family:inherit; cursor:pointer;}
+button:active{opacity:.7;}
+select{font-family:inherit;}
+
+/* ===== 레이아웃 뼈대 ===== */
+#app{display:flex; flex-direction:column; height:100vh; height:100dvh;}
+
+/* ===== 상단바 ===== */
+#topbar{
+  flex-shrink:0; background:var(--navy); color:#fff;
+  padding:10px 12px 9px; box-shadow:0 2px 8px rgba(0,0,0,0.15); z-index:20;
+}
+#topbar-row1{display:flex; align-items:center; gap:5px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
+#topbar-row1::-webkit-scrollbar{display:none;}
+#locBtn{
+  flex:1 1 44px; min-width:36px; background:transparent; border:none; border-radius:8px;
+  padding:7px 4px; color:#fff; font-size:14.5px; font-weight:700; text-align:center;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.trans-sel{flex:1 1 62px; min-width:52px; background:transparent; color:#fff; border:none; border-radius:8px;
+  padding:7px 2px; font-size:14.5px; font-weight:700; -webkit-appearance:none; appearance:none; text-align:center; text-align-last:center;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.trans-caret{display:inline-block; margin-left:4px; font-size:10px; opacity:0.85;}
+.icon-btn{
+  background:transparent; border:none; border-radius:8px; color:#fff;
+  width:32px; height:38px; font-size:14.5px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  transition:background .12s ease, transform .12s ease;
+}
+.icon-btn:active{background:rgba(255,255,255,0.32); transform:scale(0.94);}
+#hymnBtn{
+  background:transparent; border:none; border-radius:10px; color:#F0C75E;
+  height:40px; padding:0 12px; min-width:0; font-size:14.5px; font-weight:800; letter-spacing:0.2px; display:flex; align-items:center; justify-content:center; gap:4px; flex:0 0 auto;
+  box-shadow:none;
+  transition:color .12s ease, transform .12s ease;
+}
+#hymnBtn:active{transform:scale(0.94); color:#FFDB8A;}
+
+/* ===== 본문 ===== */
+#scriptureWrap{position:relative; flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden;}
+#scripture{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:18px 6px 100px;}
+.verse{
+  display:flex; align-items:baseline; gap:8px; padding:7px 0;
+  font-family:var(--font-serif); line-height:1.85; font-size:19px; border-bottom:1px solid transparent;
+}
+.verse.selecting{background:var(--gold-bg); border-radius:6px;}
+.jump-highlight{background:var(--gold-bg) !important; border-radius:8px;}
+.verse.has-memo, .verse-pair.has-memo{
+  background:rgba(58,75,122,0.055); border-radius:6px;
+  box-shadow:inset 3px 0 0 var(--navy-soft);
+}
+.verse.vhighlight, .verse-pair.vhighlight{
+  background:rgba(255,208,64,0.14); border-radius:6px; cursor:pointer;
+}
+.verse.vhighlight.has-memo, .verse-pair.vhighlight.has-memo{
+  background:rgba(255,208,64,0.14); box-shadow:inset 3px 0 0 var(--navy-soft);
+}
+.verse, .verse-pair{cursor:pointer;}
+.vnum{
+  flex-shrink:0; color:var(--gold); font-weight:700; font-size:19px; font-family:var(--font-sans);
+  min-width:1.6em; text-align:right; padding:0.15em 3px 0; margin:0 -3px; border-radius:5px; transition:background .1s ease;
+}
+.vnum[data-vnum]{cursor:pointer; user-select:none; -webkit-user-select:none;}
+.vnum[data-vnum]:active{background:var(--gold-bg);}
+.vnum[data-vnum].copied{color:#2E8B57; background:rgba(46,139,87,0.14); font-weight:900;}
+.vtext{flex:1;}
+.vtext.secondary{color:var(--ink-soft); font-size:16.5px; margin-top:2px;}
+.verse-pair{display:flex; flex-direction:column; padding:9px 0; border-bottom:1px dashed var(--line);}
+.verse-pair .row{display:flex; align-items:baseline; gap:8px;}
+.verse-icons{display:inline-flex; align-items:center; gap:4px; margin-left:6px; vertical-align:middle;}
+.vicon{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:18px; height:18px; border-radius:50%; font-size:10.5px; font-weight:800;
+  border:1px solid #EAD9AE; cursor:pointer;
+}
+.vicon.cmt-icon{background:#EFE7FA; color:#7A4FC4; transition:background .1s ease;}
+.vicon.cmt-icon:active{background:#7A4FC4; color:#fff;}
+.vicon.memo-icon{background:#EAF1FB; color:var(--navy-soft); border-color:#CBDAF0; transition:background .1s ease;}
+.vicon.memo-icon:active{background:#CBDAF0;}
+.vicon.memo-icon.has-memo{background:var(--navy); color:#fff; border-color:var(--navy);}
+.chapter-head{
+  font-family:var(--font-sans); font-weight:800; font-size:15px; color:var(--navy-soft);
+  padding:2px 0 14px; letter-spacing:0.3px;
+}
+.compare-warning{
+  font-family:var(--font-sans); font-size:12.5px; line-height:1.6; color:#8a5a00;
+  background:#FFF6E0; border:1px solid #F0DA9E; border-radius:8px; padding:10px 12px; margin:0 0 14px;
+}
+.compare-warning b{color:var(--danger);}
+.load-msg{color:var(--ink-soft); text-align:center; padding:40px 20px; font-size:15px; line-height:1.7;}
+.load-msg b{color:var(--danger);}
+
+/* ===== 절 복사 토스트 ===== */
+#copyToast{
+  position:fixed; left:50%; bottom:calc(28px + var(--safe-bottom)); transform:translateX(-50%) translateY(10px);
+  background:rgba(42,40,35,0.92); color:#fff; font-size:13.5px; font-weight:700;
+  padding:9px 16px; border-radius:20px; z-index:120; opacity:0; pointer-events:none;
+  transition:opacity .15s ease, transform .15s ease; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,0.25);
+}
+#copyToast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+
+/* ===== 본문 영역 플로팅 홈 + 책갈피 버튼 (맨 아래 오른쪽) ===== */
+#floatRightGroup{
+  position:absolute; right:14px; bottom:calc(18px + var(--safe-bottom)); z-index:40;
+  display:flex; align-items:center; gap:10px;
+}
+/* #homeBtn 모양은 common.css .home-fab-light 사용, 위치는 부모(#floatRightGroup)의 flex 배치를 그대로 따름 */
+
+/* ===== 본문 영역 플로팅 뒤로/앞으로 버튼 (맨 아래 왼쪽) ===== */
+#floatLeftGroup{
+  position:absolute; left:6px; bottom:calc(14px + var(--safe-bottom)); z-index:40;
+  display:flex; align-items:center; gap:0px;
+}
+#backBtn, #forwardBtn{
+  width:40px; height:42px; border-radius:50%; background:transparent; border:none;
+  color:rgba(27,42,82,0.75); font-size:32px; font-weight:700; line-height:1;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  transition:opacity .15s ease, transform .12s ease, color .12s ease;
+}
+#backBtn:active, #forwardBtn:active{color:rgba(27,42,82,1); transform:scale(0.94);}
+#backBtn.disabled, #forwardBtn.disabled{opacity:0.3; pointer-events:none;}
+#bookmarkBtn{
+  width:40px; height:40px; border-radius:50%; background:rgba(27,42,82,0.18); color:rgba(27,42,82,0.65);
+  border:none; box-shadow:none; backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  transition:background .12s ease, transform .12s ease;
+}
+#bookmarkBtn:active{background:rgba(27,42,82,0.32); transform:scale(0.94);}
+
+/* ===== 이전 장 / 다음 장 버튼 (본문 좌우 가장자리, 세로 중앙 고정) ===== */
+#chapPrevBtn, #chapNextBtn{
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:36px; height:76px; z-index:30; background:transparent; border:none;
+  color:rgba(27,42,82,0.26); font-size:28px; font-weight:700; line-height:1;
+  display:flex; align-items:center; justify-content:center;
+  transition:color .12s ease, opacity .15s ease;
+}
+#chapPrevBtn{left:0;}
+#chapNextBtn{right:0;}
+#chapPrevBtn:active, #chapNextBtn:active{color:rgba(27,42,82,0.6);}
+#chapPrevBtn.disabled, #chapNextBtn.disabled{opacity:0; pointer-events:none;}
+
+/* ===== 폰트크기 조절 팝오버 ===== */
+#fontPop{
+  position:fixed; top:64px; right:12px; background:var(--bg-elevated); border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2); padding:10px; display:none; z-index:60; gap:8px;
+}
+#fontPop.show{display:flex;}
+#fontPop button{width:40px; height:40px; border-radius:8px; border:1px solid var(--line); background:#fff; font-size:16px; font-weight:800; color:var(--navy); transition:background .12s ease, transform .12s ease;}
+#fontPop button:active{background:var(--gold-bg); transform:scale(0.94);}
+
+/* ===== 설정 시트 색상 (헤더 톤 옅게) ===== */
+#settingsSheet{background:#EEF2FA;}
+
+#mainTransMenu{
+  position:fixed; background:#EEF2FA; border-radius:0 0 12px 12px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.28); padding:6px; display:none; z-index:60;
+  max-height:60vh; overflow-y:auto; min-width:130px; max-width:min(220px, calc(100vw - 24px));
+  scrollbar-width:none; -ms-overflow-style:none;
+}
+#mainTransMenu::-webkit-scrollbar{display:none; width:0; height:0;}
+#mainTransMenu.show{display:block;}
+.trans-menu-item{padding:7px 10px; border-radius:8px; font-size:14.5px; font-weight:700; color:var(--navy-soft); cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.trans-menu-item:active{background:#E4EAF7;}
+.trans-menu-item.active{background:var(--gold); color:#3a2c08;}
+
+/* ===== 바텀시트 공통 ===== */
+.sheet-backdrop{
+  position:fixed; inset:0; background:rgba(0,0,0,0.42); z-index:80; display:none; opacity:0; transition:opacity .2s;
+}
+.sheet-backdrop.show{display:block; opacity:1;}
+.sheet{
+  position:fixed; left:0; right:0; bottom:0; z-index:90; background:var(--bg-elevated);
+  border-radius:18px 18px 0 0; max-height:82vh; display:flex; flex-direction:column;
+  transform:translateY(100%); transition:transform .25s ease; box-shadow:0 -8px 30px rgba(0,0,0,0.25);
+  padding-bottom:var(--safe-bottom);
+}
+.sheet.show{transform:translateY(0);}
+.sheet-handle{width:40px; height:4px; background:var(--line); border-radius:2px; margin:10px auto 4px;}
+.sheet-title{font-size:16px; font-weight:800; padding:8px 18px 12px; color:var(--navy); display:flex; align-items:center; justify-content:space-between;}
+.x{color:var(--ink-soft); font-size:20px; font-weight:400; cursor:pointer; padding:4px 6px; border-radius:6px; transition:background .12s ease, color .12s ease;}
+.x:active{background:var(--gold-bg); color:var(--navy);}
+.sheet-body{overflow-y:auto; padding:0 18px 18px;}
+
+/* ===== 범위/책/장/절 4단 피커 (본문 영역 안, 헤더 바로 아래부터) =====
+   #scriptureWrap은 헤더 다음에 오는 요소라 그 안에서 top:0은 항상 "헤더 바로 아래"를 뜻한다.
+   JS로 헤더 높이를 재지 않아도 항상 정확하게 위치가 잡힌다. */
+#locBackdrop{position:absolute; inset:0; z-index:80;}
+#locSheet{
+  position:absolute; top:0; left:0; right:0; bottom:0; z-index:90;
+  max-height:none; border-radius:0 0 16px 16px; transform:translateY(-100%);
+  display:flex; flex-direction:column; box-shadow:0 10px 24px rgba(0,0,0,0.28);
+  transition:transform .25s ease; background:linear-gradient(160deg, #C8D1E4 0%, #AEB9D4 55%, #929FC0 100%);
+}
+#locSheet.show{transform:translateY(0);}
+#locSheet .sheet-handle{display:none;}
+.pk-header-row{display:flex; flex-shrink:0; background:rgba(255,255,255,0.35); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); border-top:1px solid var(--line); border-bottom:1px solid var(--line); gap:6px; padding:0 4px;}
+.pk-header{padding:8px 6px; font-size:12.5px; font-weight:800; color:var(--ink-soft); text-align:center;}
+.pk-header.range{flex:0 0 54px;}
+.pk-header.book{flex:1.6;}
+.pk-header.chapter{flex:0 0 76px;}
+.pk-header.pk-verse{flex:0 0 76px;}
+.pk-cols{display:flex; flex:1; min-height:0; gap:6px; padding:0 4px;}
+.pk-col{
+  overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; touch-action:pan-y;
+  scrollbar-width:none; -ms-overflow-style:none;
+}
+.pk-col::-webkit-scrollbar{display:none; width:0; height:0;}
+.pk-col.range{flex:0 0 54px; background:rgba(255,255,255,0.25);}
+.pk-col.book{flex:1.6;}
+.pk-col.chapter{flex:0 0 76px;}
+.pk-col.pk-verse{flex:0 0 76px;}
+.pk-item{padding:3px 12px; font-size:15px; font-weight:400; border-bottom:1px solid var(--line); color:var(--ink); cursor:pointer; transition:background .1s ease; white-space:nowrap;}
+.pk-item:active{background:var(--gold-bg);}
+.pk-col.chapter .pk-item, .pk-col.pk-verse .pk-item{text-align:center; padding:3px 6px;}
+.pk-col.range .pk-item{text-align:center; padding:3px 3px; font-size:13px;}
+.pk-item.active{background:var(--gold); color:#3a2c08; font-weight:800;}
+.pk-item.range-btn{color:var(--navy-soft); font-weight:800;}
+.pk-item.range-label{color:var(--ink-soft); font-size:11px; font-weight:700; padding:9px 3px 4px; border-bottom:none;}
+.pk-confirm-bar{display:flex; border-top:1px solid var(--line); flex-shrink:0;}
+.pk-confirm-bar button{flex:1; padding:12px 8px; font-size:15px; font-weight:800; border:none; background:none; transition:background .12s ease;}
+.pk-confirm-bar button:active{background:var(--gold-bg);}
+#locConfirmBtn{color:#fff; background:var(--navy);}
+#locCancelBtn{color:var(--ink-soft); background:var(--bg);}
+
+/* 주석 시트 */
+#cmtBody{font-size:15px; line-height:1.85; color:var(--ink);}
+#cmtBody p{margin:0 0 10px;}
+#cmtBody a{color:var(--navy-soft);}
+#cmtBody strong{color:var(--navy);}
+
+/* 사전 팝업 */
+#dictPop{
+  position:fixed; z-index:70; max-width:88vw; width:320px; background:var(--bg-elevated);
+  border-radius:12px; box-shadow:0 12px 30px rgba(0,0,0,0.25); border:1px solid var(--line);
+  display:none; max-height:280px; flex-direction:column;
+}
+#dictPop.show{display:flex;}
+#dictPop .hd{padding:10px 14px; font-weight:800; color:var(--navy); border-bottom:1px solid var(--line); font-size:14px; display:flex; justify-content:space-between;}
+#dictPop .bd{padding:10px 14px; overflow-y:auto; font-size:13.5px; line-height:1.7; color:var(--ink);}
+
+/* 메모 시트 */
+.memo-item{background:var(--bg); border-radius:10px; padding:12px; margin-bottom:8px;}
+.memo-item .head{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
+.memo-item .meta{font-size:12px; color:var(--gold); font-weight:800;}
+.memo-item .txt{font-size:14.5px; line-height:1.6; white-space:pre-wrap;}
+.memo-item .del{color:var(--danger); font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0;}
+.memo-input-row{display:flex; gap:8px; margin-bottom:10px; align-items:stretch;}
+.memo-input-row select{width:64px; flex-shrink:0; border:1px solid var(--line); border-radius:8px; padding:8px 2px; font-size:13.5px; text-align:center; text-align-last:center;}
+#memoText{
+  width:100%; min-height:120px; border:1.5px solid var(--line); border-radius:10px; padding:10px 12px;
+  font-family:inherit; font-size:15px; resize:vertical;
+}
+.memo-save-row{display:flex; justify-content:flex-end; margin-bottom:14px;}
+#memoSaveBtn{background:var(--navy); color:#fff; border:none; border-radius:8px; padding:8px 20px; font-size:13.5px; font-weight:800;}
+
+/* 설정 시트 */
+.settings-card{background:#FFFFFF; border:1px solid #DCE4F5; border-radius:12px; padding:14px; margin-bottom:12px;}
+.settings-card-title{font-size:14.5px; font-weight:800; color:var(--navy); margin-bottom:4px;}
+.settings-card-desc{font-size:12px; color:var(--navy-soft); line-height:1.5; margin-bottom:10px;}
+.settings-file-label{
+  display:block; text-align:center; background:var(--gold-bg); color:var(--gold);
+  border:1px solid #EAD9AE; border-radius:8px; padding:10px; font-size:13.5px; font-weight:700; cursor:pointer;
+}
+.settings-file-label:active{background:var(--gold); color:#fff;}
+.settings-list{margin-top:10px;}
+.settings-list-item{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  background:#F4F7FD; border:1px solid #DCE4F5; border-radius:8px;
+  padding:8px 10px; margin-bottom:6px; font-size:13px; color:var(--ink);
+}
+.settings-list-item .name{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700;}
+.settings-list-item .remove{color:var(--danger); font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0; padding:2px 6px;}
+.settings-empty{color:var(--navy-soft); font-size:12.5px; text-align:center; padding:8px 0;}
+.font-choice-row{display:flex; gap:8px;}
+.font-choice-btn{
+  flex:1; padding:12px 6px; border-radius:10px; border:1.5px solid #DCE4F5; background:#F4F7FD;
+  color:var(--ink); font-size:13px; font-weight:700; text-align:center;
+}
+.font-choice-btn.active{border-color:var(--gold); background:var(--gold-bg); color:var(--gold);}
+.settings-export-btn{width:100%; background:var(--navy-soft); color:#fff; border:none; border-radius:10px; padding:13px; font-size:14.5px; font-weight:800;}
+.settings-select{
+  width:100%; margin-top:10px; background:#F4F7FD; color:var(--ink); border:1.5px solid #DCE4F5;
+  border-radius:10px; padding:11px 10px; font-size:13.5px; font-weight:700; -webkit-appearance:none; appearance:none;
+}
+
+/* ===== 단어 검색 시트 (헤더 바로 아래, 본문 영역 안에서 아래로 슬라이드) =====
+   #scriptureWrap은 헤더 다음에 오는 요소라 그 안에서 top:0은 항상 "헤더 바로 아래"를 뜻한다. */
+#searchBackdrop{position:absolute; inset:0; z-index:80;}
+#searchSheet{
+  position:absolute; top:0; bottom:auto; left:0; right:0; z-index:90;
+  transform:translateY(-100%);
+  border-radius:0 0 18px 18px;
+  box-shadow:0 10px 24px rgba(0,0,0,0.28);
+}
+#searchSheet.show{transform:translateY(0);}
+#searchHandle{cursor:pointer;}
+.search-input-row{display:flex; gap:8px; margin-bottom:6px;}
+#searchInput{
+  flex:1; min-width:0; height:34px; border:1.5px solid var(--line); border-radius:9px; padding:0 10px;
+  font-family:inherit; font-size:13.5px; background:#fff; color:var(--ink);
+}
+#searchGoBtn{
+  flex-shrink:0; height:34px; background:var(--navy); color:#fff; border:none; border-radius:9px;
+  padding:0 14px; font-size:13px; font-weight:800;
+}
+.search-status{font-size:12.5px; color:var(--ink-soft); margin:0 2px 12px;}
+.search-result-item{padding:10px 8px; border-bottom:1px solid var(--line); cursor:pointer; border-radius:8px; transition:background .1s ease;}
+.search-result-item:active{background:var(--gold-bg);}
+.search-result-ref{font-size:12.5px; font-weight:800; color:var(--navy-soft); margin-bottom:3px;}
+.search-result-text{font-size:14.5px; line-height:1.6; color:var(--ink); font-family:var(--font-serif);}
+.search-hit{background:#FFD040; color:#2A2823; border-radius:3px; padding:0 1px; font-weight:800;}
+
+/* ===== 책갈피 시트 ===== */
+.bookmark-add-btn{
+  width:100%; background:var(--navy); color:#fff; border:none; border-radius:9px;
+  padding:7px; font-size:13px; font-weight:800; margin-bottom:8px;
+}
+.bookmark-add-btn:disabled{opacity:0.4;}
+.bookmark-item{
+  display:flex; align-items:center; gap:4px; padding:4px 6px; border-bottom:1px solid rgba(27,42,82,0.16);
+}
+.bookmark-item-main{flex:1; min-width:0; cursor:pointer;}
+.bookmark-item-ref{
+  display:block; font-size:13.5px; font-weight:800; color:var(--navy);
+  padding:1px 0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.bookmark-item-edit{flex-shrink:0; background:transparent; border:none; color:var(--ink-soft); font-size:14px; padding:2px 6px;}
+.bookmark-item-del{flex-shrink:0; background:transparent; border:none; color:var(--ink-soft); font-size:15px; padding:2px 7px;}
+.bookmark-empty{font-size:13px; color:var(--ink-soft); text-align:center; padding:18px 0;}
+.bookmark-sheet-label{font-size:16px; font-weight:800; color:var(--navy); margin:2px 0 8px 10px;}
+#bookmarkSheet{background:rgba(255,253,248,0.55); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div id="topbar-row1">
+      <button class="icon-btn" id="settingsBtn" title="설정">☰</button>
+      <button type="button" class="trans-sel" id="mainTransBtn"></button>
+      <button id="locBtn"></button>
+      <button class="icon-btn" id="fontBtn" title="글자 크기">Aa</button>
+      <button class="icon-btn" id="searchBtn" title="단어 검색">🔍</button>
+      <button id="hymnBtn" title="찬송가">🎵 찬송</button>
+    </div>
+  </div>
+
+  <div id="scriptureWrap">
+    <div id="scripture">
+      <div class="load-msg">불러오는 중…</div>
+    </div>
+
+    <button id="chapPrevBtn" title="이전 장">‹</button>
+    <button id="chapNextBtn" title="다음 장">›</button>
+
+    <div id="floatLeftGroup">
+      <button id="backBtn" title="이전 위치로 (길게 누르면 발자취 전체 지우기)"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="11 6 5 12 11 18"/></svg></button>
+      <button id="forwardBtn" title="다음 위치로"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg></button>
+    </div>
+    <div id="floatRightGroup">
+      <button id="bookmarkBtn" title="책갈피"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6 2.5c-1.1 0-2 .9-2 2v17l8-4.8 8 4.8v-17c0-1.1-.9-2-2-2H6z"/></svg></button>
+      <button class="home-fab-light" id="homeBtn" title="홈">🏠</button>
+    </div>
+
+    <!-- 폰트 크기 팝오버 -->
+    <div id="fontPop">
+      <button id="fontDown">가-</button>
+      <button id="fontUp">가+</button>
+    </div>
+
+    <!-- 범위/책/장/절 4단 피커 시트 (헤더 바로 아래, 본문 영역 안에서 슬라이드) -->
+    <div class="sheet-backdrop" id="locBackdrop"></div>
+    <div class="sheet" id="locSheet">
+      <div class="sheet-handle"></div>
+      <div class="pk-header-row">
+        <div class="pk-header range">범위</div>
+        <div class="pk-header book">책</div>
+        <div class="pk-header chapter">장</div>
+        <div class="pk-header pk-verse">절</div>
+      </div>
+      <div class="pk-cols">
+        <div class="pk-col range" id="pkRange"></div>
+        <div class="pk-col book" id="pkBook"></div>
+        <div class="pk-col chapter" id="pkChapter"></div>
+        <div class="pk-col pk-verse" id="pkVerse"></div>
+      </div>
+      <div class="pk-confirm-bar">
+        <button id="locConfirmBtn"></button>
+        <button id="locCancelBtn">취소</button>
+      </div>
+    </div>
+
+    <!-- 단어 검색 시트 (헤더 바로 아래, 본문 영역 안에서 슬라이드) -->
+    <div class="sheet-backdrop" id="searchBackdrop"></div>
+    <div class="sheet" id="searchSheet">
+      <div class="sheet-handle" id="searchHandle"></div>
+      <div class="sheet-body" id="searchSheetBody">
+        <div class="search-input-row">
+          <input type="text" id="searchInput" placeholder="검색할 단어를 입력하세요" enterkeyhint="search">
+          <button id="searchGoBtn">검색</button>
+        </div>
+        <div class="search-status" id="searchStatus"></div>
+        <div id="searchResults"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 번역본 선택 드롭다운 -->
+<div id="mainTransMenu"></div>
+
+
+
+<!-- 주석 시트 -->
+<div class="sheet-backdrop" id="cmtBackdrop"></div>
+<div class="sheet" id="cmtSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title"><span id="cmtTitle">주석</span><span class="x" id="cmtClose">✕</span></div>
+  <div class="sheet-body"><div id="cmtBody">불러오는 중…</div></div>
+</div>
+
+<!-- 메모 시트 -->
+<div class="sheet-backdrop" id="memoBackdrop"></div>
+<div class="sheet" id="memoSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title"><span>메모</span><span class="x" id="memoClose">✕</span></div>
+  <div class="sheet-body">
+    <div class="memo-input-row">
+      <select id="memoVerseSel"></select>
+      <textarea id="memoText" placeholder="묵상 내용을 적어보세요…" style="flex:1;"></textarea>
+    </div>
+    <div class="memo-save-row">
+      <button id="memoSaveBtn">저장</button>
+    </div>
+    <div id="memoList" style="margin-top:16px;"></div>
+  </div>
+</div>
+
+<!-- 책갈피 시트 -->
+<div class="sheet-backdrop" id="bookmarkBackdrop"></div>
+<div class="sheet" id="bookmarkSheet">
+  <div class="sheet-title"><span></span><span class="x" id="bookmarkClose">✕</span></div>
+  <div class="sheet-body">
+    <div class="bookmark-sheet-label">책갈피</div>
+    <button id="bookmarkAddBtn" class="bookmark-add-btn">+ 현재 위치 저장</button>
+    <div id="bookmarkList"></div>
+  </div>
+</div>
+
+<!-- 설정 시트 -->
+<div class="sheet-backdrop" id="settingsBackdrop"></div>
+<div class="sheet" id="settingsSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title"><span>설정</span><span class="x" id="settingsClose">✕</span></div>
+  <div class="sheet-body">
+
+    <div class="settings-card">
+      <div class="settings-card-title">📖 성경 번역본 불러오기</div>
+      <div class="settings-card-desc">마이스워드 성경 파일(.mybible) 여러 개를 한 번에 선택할 수 있습니다. 예: 개역개정.bbl.mybible</div>
+      <label class="settings-file-label" for="fileBible">📂 파일 선택 (여러 개 가능)</label>
+      <input type="file" id="fileBible" accept=".mybible" multiple style="display:none">
+      <div class="settings-list" id="bibleList"></div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-card-title">📝 주석 불러오기</div>
+      <div class="settings-card-desc">마이스워드 주석 파일(.mybible) 1개를 선택하세요. 예: HokmahKor.cmt.mybible</div>
+      <label class="settings-file-label" for="fileCmt">📂 파일 선택 (1개)</label>
+      <input type="file" id="fileCmt" accept=".mybible" style="display:none">
+      <div class="settings-list" id="cmtList"></div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-card-title">📔 사전 불러오기</div>
+      <div class="settings-card-desc">마이스워드 사전 파일(.mybible)을 최대 3개까지 등록할 수 있습니다. 예: KorEzra.dct.mybible</div>
+      <label class="settings-file-label" for="fileDict">📂 파일 선택 (여러 개 가능)</label>
+      <input type="file" id="fileDict" accept=".mybible" multiple style="display:none">
+      <div class="settings-list" id="dictList"></div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-card-title">📚 번역본 비교 보기</div>
+      <div class="settings-card-desc">본문을 한 가지 번역본으로만 볼지, 두 번역본을 나란히 볼지 선택하세요.<br>※ 별도의 등록 창은 따로 없어요 — 위 "성경 번역본 불러오기"에 등록한 번역본들 중에서 아래 목록으로 비교할 번역본을 고르시면 됩니다.</div>
+      <div class="font-choice-row" id="compareModeRow">
+        <button type="button" class="font-choice-btn" data-compare="single">단일 보기</button>
+        <button type="button" class="font-choice-btn" data-compare="double">더블 보기</button>
+      </div>
+      <select class="settings-select" id="compareTransSel"></select>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-card-title">Aa 글자체 선택</div>
+      <div class="font-choice-row" id="fontChoiceRow"></div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-card-title">💾 메모 내보내기</div>
+      <div class="settings-card-desc">지금까지 적은 모든 메모를 파일 하나로 저장합니다.</div>
+      <button class="settings-export-btn" id="exportMemoBtn">메모 파일로 내보내기</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- 절 복사 토스트 -->
+<div id="copyToast"></div>
+
+<!-- 사전 팝업 -->
+<div id="dictPop">
+  <div class="hd"><span id="dictWord"></span><span class="x" id="dictClose">✕</span></div>
+  <div class="bd" id="dictBody"></div>
+</div>
+
+<script src="./sql-wasm.js"></script>
+<script>
+'use strict';
+
+/* ===================== 절 복사 기능 상태 ===================== */
+let CURRENT_VERSE_TEXT = {};   // {절번호: 본문텍스트} - 렌더링될 때마다 갱신
+const selectedVerses = new Set(); // 현재 빨간색으로 선택된 절번호들
+let MAIN_TRANS_KEYS = []; // 헤더 번역본 드롭다운에 표시할 번역본 목록
+let searchHighlightWord = ''; // 마지막으로 검색한 단어 - 본문에 노란색으로 표시하기 위해 기억해둠
+
+/* ===================== 설정 ===================== */
+// 성경/사전/주석은 모두 마이스워드 SQLite(.mybible) 원본 파일을 설정(⚙)에서 그대로 등록해 씁니다.
+// (JSON 변환 없이 브라우저에서 sql.js로 직접 열어 필요한 장/단어만 조회 — 로딩 최소화)
+const TRANSLATIONS = [
+  {key:'개역개정'}, {key:'바른성경'}, {key:'표준새번역'}, {key:'쉬운성경'}, {key:'우리말성경'},
+  {key:'현대인의 성경'}, {key:'흠정역'}, {key:'흠정역한자음'}, {key:'한자병용'}, {key:'쉬운 아가페'},
+  {key:'Korean Catholic Bible'}, {key:'Korean CoTrans Bible'}, {key:'kor'}, {key:'korhch'}, {key:'kongdong'},
+  {key:'NIV'}, {key:'일본 구어역'}, {key:'일본 문어역'}
+];
+
+// 66권 book number -> 한글 이름 (선택 시트 표시는 개역개정 bookNames를 우선 사용, 로드 전 fallback)
+const BOOK_FALLBACK = {1:'창세기',2:'출애굽기',3:'레위기',4:'민수기',5:'신명기',6:'여호수아',7:'사사기',8:'룻기',9:'사무엘상',10:'사무엘하',11:'열왕기상',12:'열왕기하',13:'역대상',14:'역대하',15:'에스라',16:'느헤미야',17:'에스더',18:'욥기',19:'시편',20:'잠언',21:'전도서',22:'아가',23:'이사야',24:'예레미야',25:'예레미야애가',26:'에스겔',27:'다니엘',28:'호세아',29:'요엘',30:'아모스',31:'오바댜',32:'요나',33:'미가',34:'나훔',35:'하박국',36:'스바냐',37:'학개',38:'스가랴',39:'말라기',40:'마태복음',41:'마가복음',42:'누가복음',43:'요한복음',44:'사도행전',45:'로마서',46:'고린도전서',47:'고린도후서',48:'갈라디아서',49:'에베소서',50:'빌립보서',51:'골로새서',52:'데살로니가전서',53:'데살로니가후서',54:'디모데전서',55:'디모데후서',56:'디도서',57:'빌레몬서',58:'히브리서',59:'야고보서',60:'베드로전서',61:'베드로후서',62:'요한1서',63:'요한2서',64:'요한3서',65:'유다서',66:'요한계시록'};
+const CHAPTER_COUNT = {1:50,2:40,3:27,4:36,5:34,6:24,7:21,8:4,9:31,10:24,11:22,12:25,13:29,14:36,15:10,16:13,17:10,18:42,19:150,20:31,21:12,22:8,23:66,24:52,25:5,26:48,27:12,28:14,29:3,30:9,31:1,32:4,33:7,34:3,35:3,36:3,37:2,38:14,39:4,40:28,41:16,42:24,43:21,44:28,45:16,46:16,47:13,48:6,49:6,50:4,51:4,52:5,53:3,54:6,55:4,56:3,57:1,58:13,59:5,60:5,61:3,62:5,63:1,64:1,65:1,66:22};
+
+/* ===================== 상태 ===================== */
+let state = {
+  book: 1, chapter: 1,
+  mainKey: '개역개정', compareKey: '바른성경', compareOn:true,
+  fontSize: 19, fontChoice: 'serif'
+};
+const BIBLE_DBS = {};          // 번역본 key -> sql.js Database (한 번 열면 세션 내내 재사용)
+const BIBLE_CHAPTER_CACHE = {}; // "key_book_chapter" -> {절번호: 본문} (쿼리 결과 메모이즈)
+const DICT_DBS = {};           // 'dict:이름' -> sql.js Database
+let DICT_DBS_LOADED = false;
+let CMT_CHAPTER_RANGES = null; // 현재 렌더링 중인 장의 [fromverse,toverse] 목록 (hasCommentary 판정용)
+const CMT_CACHE = {}; // "book_chapter" -> array (sql.js 쿼리 결과 메모이즈)
+
+const FONT_OPTIONS = [
+  {id:'serif', label:'명조체', family:"'Noto Serif KR', serif"},
+  {id:'sans', label:'고딕체', family:"'Noto Sans KR', -apple-system, 'Malgun Gothic', sans-serif"},
+  {id:'myeongjo', label:'나눔명조', family:"'Nanum Myeongjo', serif"}
+];
+
+/* ===================== IndexedDB 저장소 (AppDB) =====================
+   번역본/주석/사전을 서버 없이 "파일 선택 → 브라우저에 저장" 방식으로 쓰기 위한 공용 저장소.
+   키 형식: 'bible:개역개정', 'commentary:mybible', 'dict:03_에스라사전' 등
+*/
+const AppDB = (()=>{
+  const DB_NAME = 'BibleAppStore';
+  const DB_VER = 1;
+  let _db = null;
+  function open(){
+    if(_db) return Promise.resolve(_db);
+    return new Promise((res, rej)=>{
+      const req = indexedDB.open(DB_NAME, DB_VER);
+      req.onupgradeneeded = e=>{
+        const db = e.target.result;
+        if(!db.objectStoreNames.contains('files')){
+          db.createObjectStore('files', {keyPath:'key'});
+        }
+      };
+      req.onsuccess = e=>{ _db = e.target.result; res(_db); };
+      req.onerror = e=> rej(e);
+    });
+  }
+  async function save(key, data, meta){
+    const db = await open();
+    return new Promise((res, rej)=>{
+      const tx = db.transaction('files','readwrite');
+      tx.objectStore('files').put({key, data, meta:meta||{}, savedAt:Date.now()});
+      tx.oncomplete = ()=> res(true);
+      tx.onerror = e=> rej(e);
+    });
+  }
+  async function load(key){
+    const db = await open();
+    return new Promise((res, rej)=>{
+      const tx = db.transaction('files','readonly');
+      const req = tx.objectStore('files').get(key);
+      req.onsuccess = ()=> res(req.result||null);
+      req.onerror = e=> rej(e);
+    });
+  }
+  async function remove(key){
+    const db = await open();
+    return new Promise((res, rej)=>{
+      const tx = db.transaction('files','readwrite');
+      tx.objectStore('files').delete(key);
+      tx.oncomplete = ()=> res(true);
+      tx.onerror = e=> rej(e);
+    });
+  }
+  async function listByPrefix(prefix){
+    const db = await open();
+    return new Promise((res, rej)=>{
+      const out = [];
+      const tx = db.transaction('files','readonly');
+      const req = tx.objectStore('files').openCursor();
+      req.onsuccess = e=>{
+        const cursor = e.target.result;
+        if(cursor){
+          if(cursor.value.key.indexOf(prefix)===0) out.push(cursor.value);
+          cursor.continue();
+        } else res(out);
+      };
+      req.onerror = e=> rej(e);
+    });
+  }
+  // listByPrefix와 달리 실제 파일 데이터(바이너리)는 읽지 않고 키 이름만 가볍게 조회한다.
+  // (openCursor는 레코드 전체 값을 매번 메모리로 읽어오는 반면, openKeyCursor는 키만 읽어 훨씬 빠르다)
+  async function listKeysByPrefix(prefix){
+    const db = await open();
+    return new Promise((res, rej)=>{
+      const out = [];
+      const tx = db.transaction('files','readonly');
+      const req = tx.objectStore('files').openKeyCursor();
+      req.onsuccess = e=>{
+        const cursor = e.target.result;
+        if(cursor){
+          if(String(cursor.primaryKey).indexOf(prefix)===0) out.push(cursor.primaryKey);
+          cursor.continue();
+        } else res(out);
+      };
+      req.onerror = e=> rej(e);
+    });
+  }
+  return {save, load, remove, listByPrefix, listKeysByPrefix};
+})();
+
+/* ===================== 유틸 ===================== */
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// escText는 이미 esc()를 거친(HTML 이스케이프된) 텍스트여야 함. word와 일치하는 부분을 <mark>로 감싼다.
+function highlightMatches(escText, word){
+  if(!word) return escText;
+  const w = esc(word).trim();
+  if(!w) return escText;
+  const pattern = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  try{
+    const re = new RegExp('('+pattern+')', 'gi');
+    return escText.replace(re, '<mark class="search-hit">$1</mark>');
+  }catch(e){ return escText; }
+}
+function bookName(bn){
+  // SQLite 원본(Bible 테이블)에는 책 이름이 들어있지 않아 항상 한글 이름을 사용합니다.
+  return BOOK_FALLBACK[bn] || ('책'+bn);
+}
+const BOOK_ABBR = {1:'창',2:'출',3:'레',4:'민',5:'신',6:'수',7:'삿',8:'룻',9:'삼상',10:'삼하',11:'왕상',12:'왕하',13:'대상',14:'대하',15:'스',16:'느',17:'에',18:'욥',19:'시',20:'잠',21:'전',22:'아',23:'사',24:'렘',25:'애',26:'겔',27:'단',28:'호',29:'욜',30:'암',31:'옵',32:'욘',33:'미',34:'나',35:'합',36:'습',37:'학',38:'슥',39:'말',40:'마',41:'막',42:'눅',43:'요',44:'행',45:'롬',46:'고전',47:'고후',48:'갈',49:'엡',50:'빌',51:'골',52:'살전',53:'살후',54:'딤전',55:'딤후',56:'딛',57:'몬',58:'히',59:'약',60:'벧전',61:'벧후',62:'요일',63:'요이',64:'요삼',65:'유',66:'계'};
+function bookAbbr(bn){
+  return BOOK_ABBR[bn] || bookName(bn);
+}
+/* ===================== 홈으로 이동 =====================
+   대문.html의 iframe 안에서 열린 경우: 부모창에 메시지를 보내 홈으로 이동시킨다.
+   (대문.html이 window.addEventListener('message', ...)로 GO_HOME을 이미 처리하고 있음)
+   그 외(주소창에서 바로 열었거나, 홈 화면 아이콘/북마크로 바로 들어온 경우):
+   같은 폴더의 대문.html로 직접 이동한다.
+*/
+function goHomeApp(){
+  try{
+    if(window.top !== window.self){
+      window.parent.postMessage({action:'goHome'}, '*');
+      return;
+    }
+  }catch(_){}
+  location.href = './대문.html';
+}
+/* ===================== 다른 앱으로 이동 =====================
+   대문.html의 iframe 안에서는 이 페이지가 직접 location.href로 이동하면
+   대문의 히스토리 관리를 건너뛰고, 화면 전환도 매끄럽지 않아 이전
+   화면이 잠깐 보이는 "잔상" 현상이 생긴다. 그래서 대문에게 이동을
+   요청하고, 대문이 전환을 대신 처리하게 한다.
+   (주소창으로 바로 열었거나 독립 탭인 경우엔 그냥 직접 이동한다.)
+*/
+function navigateApp(url){
+  try{
+    if(window.top !== window.self){
+      window.parent.postMessage({action:'openPage', url:url}, '*');
+      return;
+    }
+  }catch(_){}
+  location.href = url;
+}
+// 독립 실행(대문.html 없이 이 페이지를 직접 연 경우)일 때만 자체 히스토리를 쌓아
+// 기기의 물리적 뒤로가기를 누르면 홈으로 이동하게 한다.
+// (대문.html의 iframe 안에서는 대문.html이 이미 이 흐름을 관리하므로 건드리지 않는다.)
+try{
+  if(window.top === window.self){
+    history.pushState({page:'성경읽기'}, '', '');
+    window.addEventListener('popstate', function(){ goHomeApp(); });
+  }
+}catch(_){}
+function saveState(){ try{ localStorage.setItem('bible_mobile_state', JSON.stringify(state)); }catch(_){} }
+function loadState(){
+  try{
+    const s = JSON.parse(localStorage.getItem('bible_mobile_state')||'null');
+    if(s) Object.assign(state, s);
+  }catch(_){}
+}
+
+/* ===================== 데이터 로드: 성경/사전/주석 모두 SQLite(.mybible) 원본을 sql.js로 직접 쿼리 =====================
+   마이스워드 파일(.bbl.mybible, .dct.mybible, .cmt.mybible)은 전부 SQLite DB이고 필요한 컬럼에
+   인덱스가 걸려 있다. JSON으로 통째 변환하지 않고 원본을 그대로 열어 필요한 부분만 쿼리하면
+   마이스워드와 동일하게 로딩이 거의 없다.
+   - Bible(Book, Chapter, Verse, Scripture) — (Book,Chapter,Verse) 인덱스
+   - dictionary(word, data) — word 인덱스
+   - commentary(book, chapter, fromverse, toverse, data) — (book,chapter,fromverse) 인덱스
+*/
+let SQLJS = null;         // sql.js 모듈(initSqlJs 결과), 세션당 한 번만 초기화
+let SQLJS_PROMISE = null; // 초기화 진행 중인 Promise (여러 곳에서 동시에 불러도 중복 초기화 방지)
+async function ensureSqlJs(){
+  if(SQLJS) return SQLJS;
+  if(!SQLJS_PROMISE) SQLJS_PROMISE = initSqlJs({ locateFile: f => './'+f }); // 같은 폴더의 sql-wasm.wasm
+  SQLJS = await SQLJS_PROMISE;
+  return SQLJS;
+}
+
+/* ---- 성경 본문 ---- */
+async function loadBibleDB(key){
+  if(BIBLE_DBS[key]) return BIBLE_DBS[key];
+  try{
+    const rec = await AppDB.load('bible:'+key);
+    if(!rec || !rec.data) return null;
+    const SQL = await ensureSqlJs();
+    const db = new SQL.Database(new Uint8Array(rec.data));
+    BIBLE_DBS[key] = db;
+    return db;
+  }catch(e){ console.error('성경 DB 열기 실패:', key, e); return null; }
+}
+async function loadBibleChapter(key, book, chapter){
+  const ck = key+'_'+book+'_'+chapter;
+  if(BIBLE_CHAPTER_CACHE[ck]) return BIBLE_CHAPTER_CACHE[ck];
+  const db = await loadBibleDB(key);
+  if(!db) return null;
+  try{
+    const stmt = db.prepare('SELECT Verse, Scripture FROM Bible WHERE Book=? AND Chapter=? ORDER BY Verse');
+    stmt.bind([book, chapter]);
+    const out = {};
+    while(stmt.step()){ const row = stmt.getAsObject(); out[String(row.Verse)] = row.Scripture; }
+    stmt.free();
+    BIBLE_CHAPTER_CACHE[ck] = out;
+    return out;
+  }catch(e){ console.error('성경 본문 조회 실패:', e); return null; }
+}
+async function listStoredBibleKeys(){
+  // 파일 데이터 전체를 읽지 않고 키만 조회 (fillTransSelects가 첫 화면을 지연시키던 원인)
+  const keys = await AppDB.listKeysByPrefix('bible:');
+  return keys.map(k=> k.slice('bible:'.length));
+}
+function verseCountOf(book, chapter){
+  // sql.js 쿼리는 동기 함수라, 이미 열려있는 현재 번역본 DB에서 바로 COUNT 조회 가능
+  const db = BIBLE_DBS[state.mainKey];
+  if(!db) return 30;
+  try{
+    const res = db.exec('SELECT COUNT(*) FROM Bible WHERE Book=? AND Chapter=?', [book, chapter]);
+    return res[0]?.values?.[0]?.[0] || 30;
+  }catch(e){ return 30; }
+}
+
+/* ---- 사전 ---- */
+async function ensureDictDBs(){
+  if(DICT_DBS_LOADED) return;
+  try{
+    const recs = await AppDB.listByPrefix('dict:');
+    const SQL = await ensureSqlJs();
+    for(const r of recs){
+      if(DICT_DBS[r.key]) continue;
+      try{ DICT_DBS[r.key] = new SQL.Database(new Uint8Array(r.data)); }
+      catch(e){ console.error('사전 DB 열기 실패:', r.key, e); }
+    }
+  }catch(e){}
+  DICT_DBS_LOADED = true;
+}
+function dictLookupWord(word){
+  // '에스라' 사전이 겹치는 단어에서 우선하도록 먼저 검사
+  const keys = Object.keys(DICT_DBS).sort((a,b)=> (b.includes('에스라')?1:0) - (a.includes('에스라')?1:0));
+  for(const k of keys){
+    try{
+      const res = DICT_DBS[k].exec('SELECT data FROM dictionary WHERE word=? LIMIT 1', [word]);
+      if(res.length && res[0].values.length) return res[0].values[0][0];
+    }catch(e){}
+  }
+  return null;
+}
+async function findDictEntry(text){
+  await ensureDictDBs();
+  let html = dictLookupWord(text);
+  if(html) return {word:text, html};
+  // 조사가 붙은 경우 대비: 앞부분이 표제어와 일치하는 가장 긴 매칭 탐색
+  for(let len=text.length-1; len>=2; len--){
+    const cand = text.slice(0, len);
+    html = dictLookupWord(cand);
+    if(html) return {word:cand, html};
+  }
+  return null;
+}
+let CMT_DB = null; // sql.js Database 인스턴스 (주석 SQLite, IndexedDB의 바이너리를 열어 메모리에 상주)
+async function loadCmtDB(){
+  if(CMT_DB) return CMT_DB;
+  try{
+    const rec = await AppDB.load('commentary:mybible');
+    if(!rec || !rec.data) return null;
+    const SQL = await ensureSqlJs();
+    CMT_DB = new SQL.Database(new Uint8Array(rec.data));
+    return CMT_DB;
+  }catch(e){ console.error('주석 DB 열기 실패:', e); return null; }
+}
+async function loadCmtChapter(book, chapter){
+  const k = book+'_'+chapter;
+  if(CMT_CACHE[k]) return CMT_CACHE[k];
+  const db = await loadCmtDB();
+  if(!db){ CMT_CACHE[k] = []; return []; }
+  try{
+    const stmt = db.prepare('SELECT fromverse, toverse, data FROM commentary WHERE book=? AND chapter=? ORDER BY fromverse');
+    stmt.bind([book, chapter]);
+    const rows = [];
+    while(stmt.step()) rows.push(stmt.getAsObject());
+    stmt.free();
+    CMT_CACHE[k] = rows;
+    return rows;
+  }catch(e){ console.error('주석 조회 실패:', e); return []; }
+}
+async function loadCmtIndex(){
+  // 전체 성경 인덱스를 미리 만들 필요 없이, 지금 렌더링할 장의 절 범위만 구하면 된다.
+  const rows = await loadCmtChapter(state.book, state.chapter);
+  CMT_CHAPTER_RANGES = rows.map(r=>[r.fromverse, r.toverse]);
+  return CMT_CHAPTER_RANGES;
+}
+function hasCommentary(book, chapter, verse){
+  if(!CMT_CHAPTER_RANGES) return false;
+  return CMT_CHAPTER_RANGES.some(([a,b])=> verse>=a && verse<=b);
+}
+
+/* ===================== 렌더링 ===================== */
+// 마지막으로 그린 장(챕터) 화면을 캐시해뒀다가, 다음에 같은 위치를 다시 열 때
+// DB 로딩이 끝나기 전에 우선 화면에 즉시 보여주기 위한 용도(체감 로딩 제거).
+// 실제 데이터는 뒤이어 항상 다시 불러와 덮어쓰므로 내용의 최신성에는 영향 없음.
+function chapterSig(){
+  return state.book+'_'+state.chapter+'_'+state.mainKey+'_'+(state.compareOn?state.compareKey:'');
+}
+function loadChapterCache(){
+  try{
+    const c = JSON.parse(localStorage.getItem('lastChapterCache')||'null');
+    if(c && c.sig === chapterSig()) return c.html;
+  }catch(_){}
+  return null;
+}
+function saveChapterCache(html){
+  try{ localStorage.setItem('lastChapterCache', JSON.stringify({sig: chapterSig(), html})); }catch(_){}
+}
+async function renderChapter(){
+  const scEl = document.getElementById('scripture');
+  const cached = loadChapterCache();
+  if(cached){
+    scEl.innerHTML = cached;
+    scEl.scrollTop = 0;
+    applyFontSize();
+  } else {
+    scEl.innerHTML = '<div class="load-msg">불러오는 중…</div>';
+  }
+
+  let chData, compData = null, compareUnavailable = false;
+  if(state.compareOn){
+    // 본번역/비교번역/주석 DB를 순차적으로 열지 않고 모두 동시에 열어 대기 시간을 줄인다.
+    const [mainData, compare] = await Promise.all([
+      loadBibleChapter(state.mainKey, state.book, state.chapter),
+      loadBibleChapter(state.compareKey, state.book, state.chapter),
+      loadCmtIndex()
+    ]);
+    chData = mainData;
+    compData = compare;
+    if(!compData) compareUnavailable = true;
+  } else {
+    const [mainData] = await Promise.all([
+      loadBibleChapter(state.mainKey, state.book, state.chapter),
+      loadCmtIndex()
+    ]);
+    chData = mainData;
+  }
+  if(!chData){
+    scEl.innerHTML = '<div class="load-msg"><b>본문을 불러오지 못했습니다.</b><br>설정 ⚙ → 성경 번역본 불러오기에서 '+esc(state.mainKey)+' 파일(.mybible)을 등록해주세요.</div>';
+    return;
+  }
+
+  let html = '<div class="chapter-head">'+esc(bookName(state.book))+' '+state.chapter+'장 · '+esc(state.mainKey)+'</div>';
+  if(compareUnavailable){
+    html += '<div class="compare-warning">⚠️ 비교 번역본 <b>'+esc(state.compareKey)+'</b>을(를) 불러올 수 없어 단일 보기로 표시됩니다.<br>설정 ⚙ → 성경 번역본 불러오기에서 해당 번역본 파일을 등록해주세요.</div>';
+  }
+  const verseNums = Object.keys(chData).map(Number).sort((a,b)=>a-b);
+
+  const memoVerses = new Set(loadMemos().map(m=>m.verse));
+  const hlVerses = loadHighlights();
+
+  // 절 복사 기능용: 절번호 클릭 시 복사할 원문 텍스트 매핑, 선택 상태 초기화
+  CURRENT_VERSE_TEXT = {};
+  selectedVerses.clear();
+
+  verseNums.forEach(vn=>{
+    const mainText = chData[String(vn)];
+    CURRENT_VERSE_TEXT[vn] = mainText;
+    const hasMemo = memoVerses.has(vn);
+    const isHl = hlVerses.has(vn);
+    const cmtIcon = hasCommentary(state.book, state.chapter, vn)
+      ? '<span class="vicon cmt-icon" data-cmt-v="'+vn+'"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg></span>' : '';
+    const memoIcon = '<span class="vicon memo-icon'+(hasMemo?' has-memo':'')+'" data-memo-v="'+vn+'"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>';
+    const icons = '<span class="verse-icons">'+cmtIcon+memoIcon+'</span>';
+    const rowClass = (hasMemo ? ' has-memo' : '') + (isHl ? ' vhighlight' : '');
+    const mainHtml = highlightMatches(esc(mainText), searchHighlightWord);
+    if(state.compareOn && compData){
+      const compText = compData[String(vn)] || '';
+      html += '<div class="verse-pair'+rowClass+'" data-v="'+vn+'">'
+        + '<div class="row"><span class="vnum" data-vnum="'+vn+'">'+vn+'</span><span class="vtext">'+mainHtml+icons+'</span></div>'
+        + (compText ? '<div class="row"><span class="vnum"></span><span class="vtext secondary">'+highlightMatches(esc(compText), searchHighlightWord)+'</span></div>' : '')
+        + '</div>';
+    } else {
+      html += '<div class="verse'+rowClass+'" data-v="'+vn+'">'
+        + '<span class="vnum" data-vnum="'+vn+'">'+vn+'</span><span class="vtext">'+mainHtml+icons+'</span>'
+        + '</div>';
+    }
+  });
+
+  scEl.innerHTML = html;
+  scEl.scrollTop = 0;
+  applyFontSize();
+  buildMemoVerseSelect(verseNums);
+  updateChapNavButtons();
+  saveChapterCache(html);
+}
+
+function applyFontSize(){
+  document.querySelectorAll('.vtext, .verse-pair .row .vtext').forEach(el=>{
+    el.style.fontSize = (el.classList.contains('secondary') ? state.fontSize-2.5 : state.fontSize) + 'px';
+  });
+  document.querySelectorAll('.vnum').forEach(el=>{
+    el.style.fontSize = state.fontSize + 'px';
+  });
+}
+function applyFontChoice(){
+  const opt = FONT_OPTIONS.find(f=>f.id===state.fontChoice) || FONT_OPTIONS[0];
+  document.documentElement.style.setProperty('--font-serif', opt.family);
+}
+
+/* ===================== 절 하이라이트 ===================== */
+// 한 장(챕터)에서 하이라이트는 항상 한 절만 켜지도록 단일 값으로 저장한다.
+function highlightKeyForChapter(){ return 'hl_'+state.book+'_'+state.chapter; }
+function loadHighlightVerse(){
+  const v = localStorage.getItem(highlightKeyForChapter());
+  return v ? parseInt(v, 10) : null;
+}
+function saveHighlightVerse(vn){
+  if(vn==null){ localStorage.removeItem(highlightKeyForChapter()); }
+  else { localStorage.setItem(highlightKeyForChapter(), String(vn)); }
+}
+function loadHighlights(){
+  const v = loadHighlightVerse();
+  return v==null ? new Set() : new Set([v]);
+}
+function toggleVerseHighlight(containerEl){
+  const vn = parseInt(containerEl.dataset.v, 10);
+  const current = loadHighlightVerse();
+  document.querySelectorAll('.verse.vhighlight, .verse-pair.vhighlight').forEach(el=> el.classList.remove('vhighlight'));
+  if(current === vn){
+    saveHighlightVerse(null);
+  } else {
+    containerEl.classList.add('vhighlight');
+    saveHighlightVerse(vn);
+  }
+}
+
+/* ===================== 절 복사 기능 ===================== */
+// 절번호를 클릭하면 빨간색으로 토글되고, 현재 빨간색으로 선택된 절들을
+// "절번호 본문" 형식(절번호 뒤 한 칸 띄움)으로 한 절씩 줄바꿈하여 클립보드에 복사한다.
+function toggleVerseCopy(vnumEl){
+  const vn = parseInt(vnumEl.dataset.vnum, 10);
+  if(selectedVerses.has(vn)){
+    selectedVerses.delete(vn);
+    vnumEl.classList.remove('copied');
+  } else {
+    selectedVerses.add(vn);
+    vnumEl.classList.add('copied');
+  }
+  if(selectedVerses.size === 0){ return; }
+  const sorted = Array.from(selectedVerses).sort((a,b)=>a-b);
+  const text = sorted.map(vn2 => vn2 + ' ' + (CURRENT_VERSE_TEXT[vn2] || '')).join('\n');
+  copyTextToClipboard(text);
+  showCopyToast(sorted.length===1 ? sorted[0]+'절 복사됨' : sorted.length+'개 절 복사됨');
+}
+function copyTextToClipboard(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).catch(()=> fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  document.body.removeChild(ta);
+}
+function showCopyToast(msg){
+  const toast = document.getElementById('copyToast');
+  if(!toast) return;
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(window.__copyToastTimer);
+  window.__copyToastTimer = setTimeout(()=> toast.classList.remove('show'), 1400);
+}
+
+/* ===================== 위치버튼 + 범위/책/장/절 4단 피커 ===================== */
+const JUMP_ANCHORS = [1,11,19,28,40,51,66]; // 창/왕상/시/호/마/골/계
+let pk = {book:1, chapter:1, verse:1, filter:'all'}; // 피커 임시 선택 상태
+
+function updateLocBtn(){
+  document.getElementById('locBtn').textContent = bookAbbr(state.book)+' '+state.chapter+'장';
+}
+function openLocSheet(){
+  pk.book = state.book; pk.chapter = state.chapter; pk.verse = 1; pk.filter='all';
+  renderPkRange(); renderPkBook(); renderPkChapter(); renderPkVerse(); updatePkConfirmText();
+  document.getElementById('locBackdrop').classList.add('show');
+  document.getElementById('locSheet').classList.add('show');
+}
+function closeLocSheet(){
+  document.getElementById('locBackdrop').classList.remove('show');
+  document.getElementById('locSheet').classList.remove('show');
+}
+function renderPkRange(){
+  let html = '<div class="pk-item range-btn'+(pk.filter==='all'?' active':'')+'" data-range="all">모두</div>'
+    + '<div class="pk-item range-btn'+(pk.filter==='ot'?' active':'')+'" data-range="ot">구약</div>'
+    + '<div class="pk-item range-btn'+(pk.filter==='nt'?' active':'')+'" data-range="nt">신약</div>'
+    + '<div class="pk-item range-label">점프</div>';
+  JUMP_ANCHORS.forEach(b=>{
+    html += '<div class="pk-item" data-jump="'+b+'">'+esc(bookAbbr(b))+'</div>';
+  });
+  document.getElementById('pkRange').innerHTML = html;
+}
+function renderPkBook(){
+  const range = pk.filter==='ot' ? [1,39] : pk.filter==='nt' ? [40,66] : [1,66];
+  let html='';
+  for(let b=range[0]; b<=range[1]; b++){
+    html += '<div class="pk-item'+(b===pk.book?' active':'')+'" data-book="'+b+'">'+esc(bookName(b))+'</div>';
+  }
+  const col = document.getElementById('pkBook');
+  col.innerHTML = html;
+  const activeEl = col.querySelector('.pk-item.active');
+  if(activeEl) activeEl.scrollIntoView({block:'center'});
+}
+function renderPkChapter(){
+  const n = CHAPTER_COUNT[pk.book]||50;
+  let html='';
+  for(let c=1;c<=n;c++){
+    html += '<div class="pk-item'+(c===pk.chapter?' active':'')+'" data-chapter="'+c+'">'+c+'</div>';
+  }
+  const col = document.getElementById('pkChapter');
+  col.innerHTML = html;
+  const activeEl = col.querySelector('.pk-item.active');
+  if(activeEl) activeEl.scrollIntoView({block:'center'});
+}
+function renderPkVerse(){
+  const n = verseCountOf(pk.book, pk.chapter);
+  let html='';
+  for(let v=1; v<=n; v++){
+    html += '<div class="pk-item'+(v===pk.verse?' active':'')+'" data-verse="'+v+'">'+v+'</div>';
+  }
+  const col = document.getElementById('pkVerse');
+  col.innerHTML = html;
+  const activeEl = col.querySelector('.pk-item.active');
+  if(activeEl) activeEl.scrollIntoView({block:'center'});
+}
+function updatePkConfirmText(){
+  document.getElementById('locConfirmBtn').textContent = bookAbbr(pk.book)+' '+pk.chapter+':'+pk.verse+' 선택';
+}
+async function fillTransSelects(){
+  const ck = document.getElementById('compareTransSel');
+  const builtinKeys = TRANSLATIONS.map(t=>t.key);
+  const storedKeys = await listStoredBibleKeys();
+  const allKeys = builtinKeys.concat(storedKeys.filter(k=> builtinKeys.indexOf(k)===-1));
+  const opts = k=>'<option value="'+esc(k)+'">'+esc(k)+'</option>';
+  ck.innerHTML = allKeys.map(opts).join('');
+  ck.value = state.compareKey;
+
+  MAIN_TRANS_KEYS = allKeys;
+  setMainTransBtnLabel();
+  renderMainTransMenu();
+}
+function setMainTransBtnLabel(){
+  document.getElementById('mainTransBtn').innerHTML = esc(state.mainKey)+'<span class="trans-caret">▾</span>';
+}
+function renderMainTransMenu(){
+  const menu = document.getElementById('mainTransMenu');
+  menu.innerHTML = MAIN_TRANS_KEYS.map(k=>
+    '<div class="trans-menu-item'+(k===state.mainKey?' active':'')+'" data-key="'+esc(k)+'">'+esc(k)+'</div>'
+  ).join('');
+}
+function openMainTransMenu(){
+  const btn = document.getElementById('mainTransBtn');
+  const menu = document.getElementById('mainTransMenu');
+  const topbar = document.getElementById('topbar');
+  renderMainTransMenu();
+  const r = btn.getBoundingClientRect();
+  const topbarRect = topbar.getBoundingClientRect();
+  menu.style.display = 'block'; // measure first
+  const menuW = menu.offsetWidth;
+  let left = r.left;
+  if(left + menuW > window.innerWidth - 12) left = window.innerWidth - 12 - menuW;
+  if(left < 12) left = 12;
+  menu.style.left = left + 'px';
+  menu.style.top = topbarRect.bottom + 'px';
+  menu.classList.add('show');
+}
+function closeMainTransMenu(){
+  const menu = document.getElementById('mainTransMenu');
+  menu.classList.remove('show');
+  menu.style.display = '';
+}
+
+/* ===================== 주석 시트 ===================== */
+async function openCmtSheet(verse){
+  document.getElementById('cmtBackdrop').classList.add('show');
+  document.getElementById('cmtSheet').classList.add('show');
+  document.getElementById('cmtTitle').textContent = bookName(state.book)+' '+state.chapter+':'+verse+' 주석';
+  document.getElementById('cmtBody').innerHTML = '불러오는 중…';
+  const chapterData = await loadCmtChapter(state.book, state.chapter);
+  const entry = (chapterData||[]).find(e=> verse>=e.fromverse && verse<=e.toverse);
+  document.getElementById('cmtBody').innerHTML = entry ? entry.data : '해당 절 주석이 없습니다.';
+}
+function closeCmtSheet(){
+  document.getElementById('cmtBackdrop').classList.remove('show');
+  document.getElementById('cmtSheet').classList.remove('show');
+}
+
+/* ===================== 사전 팝업 ===================== */
+async function handleSelection(){
+  const sel = window.getSelection();
+  const text = sel && sel.toString().trim();
+  if(!text || text.length===0 || text.length>14){ hideDictPop(); return; }
+  const found = await findDictEntry(text);
+  if(!found){ hideDictPop(); return; }
+  try{
+    const range = sel.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    showDictPop(found.word, found.html, rect);
+  }catch(e){ hideDictPop(); }
+}
+function showDictPop(word, html, rect){
+  const pop = document.getElementById('dictPop');
+  document.getElementById('dictWord').textContent = word;
+  document.getElementById('dictBody').innerHTML = html;
+  pop.classList.add('show');
+  const popW = 320, popH = Math.min(280, pop.scrollHeight||200);
+  let left = rect.left + rect.width/2 - popW/2;
+  left = Math.max(10, Math.min(left, window.innerWidth-popW-10));
+  let top = rect.bottom + 10;
+  if(top + popH > window.innerHeight-20){ top = rect.top - popH - 10; }
+  pop.style.left = left+'px';
+  pop.style.top = Math.max(60,top)+'px';
+}
+function hideDictPop(){ document.getElementById('dictPop').classList.remove('show'); }
+
+/* ===================== 메모 ===================== */
+function memoKeyForChapter(){ return 'memo_'+state.book+'_'+state.chapter; }
+function loadMemos(){
+  try{ return JSON.parse(localStorage.getItem(memoKeyForChapter())||'[]'); }catch(_){ return []; }
+}
+function saveMemos(arr){ localStorage.setItem(memoKeyForChapter(), JSON.stringify(arr)); }
+function buildMemoVerseSelect(verseNums){
+  const sel = document.getElementById('memoVerseSel');
+  sel.innerHTML = verseNums.map(v=>'<option value="'+v+'">'+v+'절</option>').join('');
+}
+function renderMemoList(){
+  const list = loadMemos();
+  const el = document.getElementById('memoList');
+  if(list.length===0){ el.innerHTML = '<div style="color:var(--ink-soft); font-size:13.5px; text-align:center; padding:14px 0;">이 장에 저장된 메모가 없습니다.</div>'; return; }
+  el.innerHTML = list.map((m,i)=>
+    '<div class="memo-item">'
+    +'<div class="head"><span class="meta">'+m.verse+'절</span><span class="del" data-i="'+i+'">삭제</span></div>'
+    +'<div class="txt">'+esc(m.text)+'</div></div>'
+  ).join('');
+}
+function openMemoSheet(verse){
+  renderMemoList();
+  if(verse){ document.getElementById('memoVerseSel').value = verse; }
+  document.getElementById('memoBackdrop').classList.add('show');
+  document.getElementById('memoSheet').classList.add('show');
+}
+function closeMemoSheet(){
+  document.getElementById('memoBackdrop').classList.remove('show');
+  document.getElementById('memoSheet').classList.remove('show');
+}
+function updateMemoIcons(){
+  const memoVerses = new Set(loadMemos().map(m=>m.verse));
+  document.querySelectorAll('.memo-icon').forEach(el=>{
+    const v = parseInt(el.dataset.memoV);
+    el.classList.toggle('has-memo', memoVerses.has(v));
+  });
+  document.querySelectorAll('.verse[data-v], .verse-pair[data-v]').forEach(el=>{
+    const v = parseInt(el.dataset.v);
+    el.classList.toggle('has-memo', memoVerses.has(v));
+  });
+}
+
+/* ===================== 설정 시트 ===================== */
+function openSettingsSheet(){
+  document.getElementById('settingsBackdrop').classList.add('show');
+  document.getElementById('settingsSheet').classList.add('show');
+  refreshSettingsLists();
+  renderFontChoices();
+  renderCompareModeRow();
+}
+function closeSettingsSheet(){
+  document.getElementById('settingsBackdrop').classList.remove('show');
+  document.getElementById('settingsSheet').classList.remove('show');
+}
+async function refreshSettingsLists(){
+  // 번역본 목록
+  const bibleRecs = await AppDB.listByPrefix('bible:');
+  const bibleEl = document.getElementById('bibleList');
+  bibleEl.innerHTML = bibleRecs.length ? bibleRecs.map(r=>{
+    const name = r.key.slice('bible:'.length);
+    return '<div class="settings-list-item"><span class="name">'+esc(name)+'</span><span class="remove" data-remove-bible="'+esc(r.key)+'">삭제</span></div>';
+  }).join('') : '<div class="settings-empty">등록된 번역본이 없습니다</div>';
+
+  // 주석 목록
+  const cmtRec = await AppDB.load('commentary:mybible');
+  const cmtEl = document.getElementById('cmtList');
+  cmtEl.innerHTML = cmtRec ? '<div class="settings-list-item"><span class="name">'+esc(cmtRec.meta?.fileName||'주석 파일')+'</span><span class="remove" data-remove-cmt="1">삭제</span></div>' : '<div class="settings-empty">등록된 주석이 없습니다</div>';
+
+  // 사전 목록
+  const dictRecs = await AppDB.listByPrefix('dict:');
+  const dictEl = document.getElementById('dictList');
+  dictEl.innerHTML = dictRecs.length ? dictRecs.map(r=>{
+    const name = r.key.slice('dict:'.length);
+    return '<div class="settings-list-item"><span class="name">'+esc(name)+'</span><span class="remove" data-remove-dict="'+esc(r.key)+'">삭제</span></div>';
+  }).join('') : '<div class="settings-empty">등록된 사전이 없습니다</div>';
+}
+function renderFontChoices(){
+  const row = document.getElementById('fontChoiceRow');
+  row.innerHTML = FONT_OPTIONS.map(f=>
+    '<button type="button" class="font-choice-btn'+(state.fontChoice===f.id?' active':'')+'" data-font="'+f.id+'" style="font-family:'+f.family+'">'+esc(f.label)+'</button>'
+  ).join('');
+}
+function renderCompareModeRow(){
+  const row = document.getElementById('compareModeRow');
+  row.querySelectorAll('.font-choice-btn').forEach(btn=>{
+    const isDouble = btn.dataset.compare === 'double';
+    btn.classList.toggle('active', state.compareOn === isDouble);
+  });
+  document.getElementById('compareTransSel').style.display = state.compareOn ? '' : 'none';
+}
+function stripMyswordExt(filename){
+  // 플랫폼(특히 안드로이드 브라우저)마다 file.name에서 .bbl.mybible / .mybible 같은
+  // 이중 확장자가 정규식에 다르게 매칭되는 문제가 있어, 대신 "첫 번째 마침표 앞부분"만
+  // 이름으로 사용한다. 한글 성경/사전 파일명에는 마침표가 없으므로 안전하다.
+  const i = filename.indexOf('.');
+  return i === -1 ? filename : filename.slice(0, i);
+}
+async function handleBibleFiles(fileList){
+  for(const file of Array.from(fileList)){
+    try{
+      const buf = await file.arrayBuffer(); // .bbl.mybible(SQLite) 원본을 바이너리 그대로
+      const name = stripMyswordExt(file.name);
+      await AppDB.save('bible:'+name, buf, {fileName:file.name});
+      delete BIBLE_DBS[name]; // 캐시 초기화
+      Object.keys(BIBLE_CHAPTER_CACHE).forEach(k=>{ if(k.indexOf(name+'_')===0) delete BIBLE_CHAPTER_CACHE[k]; });
+    }catch(err){
+      console.error('번역본 등록 실패:', file.name, err);
+      alert(file.name+' 불러오기 실패: '+err.message);
+    }
+  }
+  await refreshSettingsLists();
+  await fillTransSelects();
+}
+async function handleCmtFile(file){
+  try{
+    const buf = await file.arrayBuffer(); // .cmt.mybible(SQLite) 원본을 바이너리 그대로
+    await AppDB.save('commentary:mybible', buf, {fileName:file.name});
+    CMT_DB = null; CMT_CHAPTER_RANGES = null; // 캐시 초기화
+    Object.keys(CMT_CACHE).forEach(k=> delete CMT_CACHE[k]);
+  }catch(err){
+    console.error('주석 등록 실패:', file.name, err);
+    alert('주석 불러오기 실패: '+err.message);
+  }
+  await refreshSettingsLists();
+}
+async function handleDictFiles(fileList){
+  const files = Array.from(fileList); // await 전에 즉시 배열로 복사(입력값 초기화로 인한 유실 방지)
+  let existing = [];
+  try{
+    existing = await AppDB.listByPrefix('dict:');
+  }catch(err){
+    console.error('사전 목록 조회 실패', err);
+    alert('사전 저장소를 여는 데 실패했습니다: '+err.message);
+    await refreshSettingsLists();
+    return;
+  }
+  let count = existing.length;
+  for(const file of files){
+    if(count>=3){ alert('사전은 최대 3개까지 등록할 수 있습니다.'); break; }
+    try{
+      const buf = await file.arrayBuffer(); // .dct.mybible(SQLite) 원본을 바이너리 그대로
+      const name = stripMyswordExt(file.name);
+      await AppDB.save('dict:'+name, buf, {fileName:file.name});
+      count++;
+    }catch(err){
+      console.error('사전 등록 실패:', file.name, err);
+      alert(file.name+' 불러오기 실패: '+err.message);
+    }
+  }
+  Object.keys(DICT_DBS).forEach(k=> delete DICT_DBS[k]); DICT_DBS_LOADED = false; // 캐시 초기화
+  await refreshSettingsLists();
+}
+function exportMemos(){
+  const bundle = {};
+  for(let i=0;i<localStorage.length;i++){
+    const k = localStorage.key(i);
+    if(k && k.indexOf('memo_')===0) bundle[k] = JSON.parse(localStorage.getItem(k));
+  }
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  const ymd = d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  a.href = url; a.download = '메모_백업_'+ymd+'.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ===================== 방문 발자취(뒤로/앞으로, 영구 보관) =====================
+   책/장 검색, 검색 결과 이동, 책갈피 이동으로 "새로운 곳"을 볼 때마다 방문 순서를
+   발자취(navTrail)에 계속 이어붙인다(지워지지 않음). ‹ › 버튼은 이 발자취 안에서
+   커서(navCursor)만 앞뒤로 옮긴다. 앱을 껐다 켜도 localStorage에 남아있다.
+   최대 200곳까지 보관하며, 넘으면 가장 오래된 기록부터 지운다.
+*/
+const NAV_TRAIL_MAX = 200;
+let navTrail = [];
+let navCursor = -1;
+function loadNavTrail(){
+  try{
+    const s = JSON.parse(localStorage.getItem('bible_mobile_navtrail')||'null');
+    if(s && Array.isArray(s.trail) && s.trail.length){
+      navTrail = s.trail; navCursor = Math.min(Math.max(s.cursor||0,0), navTrail.length-1);
+      return;
+    }
+  }catch(_){}
+  navTrail = [{book:state.book, chapter:state.chapter}];
+  navCursor = 0;
+}
+function saveNavTrail(){
+  try{ localStorage.setItem('bible_mobile_navtrail', JSON.stringify({trail:navTrail, cursor:navCursor})); }catch(_){}
+}
+// 새로운 곳으로 이동했을 때 발자취 끝에 이어붙인다(기존 기록은 지우지 않음).
+function recordVisit(){
+  const last = navTrail[navTrail.length-1];
+  if(last && last.book===state.book && last.chapter===state.chapter){ navCursor = navTrail.length-1; updateNavButtons(); return; }
+  navTrail.push({book:state.book, chapter:state.chapter});
+  if(navTrail.length > NAV_TRAIL_MAX) navTrail.shift();
+  navCursor = navTrail.length-1;
+  saveNavTrail();
+  updateNavButtons();
+}
+function goBackNav(){
+  if(navCursor<=0) return;
+  navCursor--;
+  const loc = navTrail[navCursor];
+  state.book = loc.book; state.chapter = loc.chapter;
+  updateLocBtn(); saveState(); saveNavTrail(); updateNavButtons();
+  renderChapter();
+}
+function goForwardNav(){
+  if(navCursor>=navTrail.length-1) return;
+  navCursor++;
+  const loc = navTrail[navCursor];
+  state.book = loc.book; state.chapter = loc.chapter;
+  updateLocBtn(); saveState(); saveNavTrail(); updateNavButtons();
+  renderChapter();
+}
+function clearNavTrail(){
+  if(!confirm('지금까지의 이동 발자취를 모두 지울까요? (되돌릴 수 없습니다)')) return;
+  navTrail = [{book:state.book, chapter:state.chapter}];
+  navCursor = 0;
+  saveNavTrail();
+  updateNavButtons();
+}
+function updateNavButtons(){
+  const back = document.getElementById('backBtn');
+  const fwd = document.getElementById('forwardBtn');
+  if(back) back.classList.toggle('disabled', navCursor<=0);
+  if(fwd) fwd.classList.toggle('disabled', navCursor>=navTrail.length-1);
+}
+/* ===================== 같은 성경 안에서 이전 장/다음 장 이동 =====================
+   검색이나 책갈피로 특정 위치에 온 뒤에도, 다시 검색창을 열지 않고
+   화살표 버튼(‹ ›) 클릭이나 좌우 스와이프 제스처로 바로 다음/이전 장으로 넘어간다.
+*/
+function goToChapter(direction){
+  let book = state.book, chapter = state.chapter + direction;
+  const maxCh = CHAPTER_COUNT[book];
+  if(chapter > maxCh){
+    if(book >= 66) return; // 요한계시록 마지막 장 — 더 이상 다음 장 없음
+    book += 1; chapter = 1;
+  } else if(chapter < 1){
+    if(book <= 1) return; // 창세기 1장 — 더 이상 이전 장 없음
+    book -= 1; chapter = CHAPTER_COUNT[book];
+  }
+  state.book = book; state.chapter = chapter;
+  updateLocBtn(); saveState(); recordVisit();
+  renderChapter();
+}
+function updateChapNavButtons(){
+  const prev = document.getElementById('chapPrevBtn');
+  const next = document.getElementById('chapNextBtn');
+  if(prev) prev.classList.toggle('disabled', state.book<=1 && state.chapter<=1);
+  if(next) next.classList.toggle('disabled', state.book>=66 && state.chapter>=CHAPTER_COUNT[66]);
+}
+// 본문 영역 좌우 스와이프로도 이전/다음 장 이동 (검색·책갈피 시트가 열려있거나
+// 글자를 드래그로 선택 중일 때는 무시)
+function bindChapterSwipe(el){
+  if(!el) return;
+  let sx=0, sy=0, st=0, tracking=false;
+  el.addEventListener('touchstart', (e)=>{
+    if(document.getElementById('locSheet').classList.contains('show')) return;
+    if(document.getElementById('searchSheet').classList.contains('show')) return;
+    const t = e.changedTouches[0];
+    sx = t.clientX; sy = t.clientY; st = Date.now(); tracking = true;
+  }, {passive:true});
+  el.addEventListener('touchend', (e)=>{
+    if(!tracking) return;
+    tracking = false;
+    const sel = window.getSelection();
+    if(sel && sel.toString().trim().length>0) return; // 텍스트 드래그 선택 중이면 무시
+    const t = e.changedTouches[0];
+    const dx = t.clientX - sx, dy = t.clientY - sy, dt = Date.now() - st;
+    if(dt > 600) return;
+    if(Math.abs(dx) < 65 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+    if(dx < 0) goToChapter(1); else goToChapter(-1);
+  }, {passive:true});
+}
+// ‹ 버튼을 길게 누르면(0.6초) 발자취 전체 지우기 확인창이 뜬다.
+function bindLongPress(el, fn){
+  if(!el) return;
+  let timer = null, fired = false;
+  const start = ()=>{ fired=false; timer = setTimeout(()=>{ fired=true; fn(); }, 600); };
+  const cancel = ()=>{ if(timer) clearTimeout(timer); timer=null; };
+  el.addEventListener('touchstart', start, {passive:true});
+  el.addEventListener('touchend', cancel);
+  el.addEventListener('touchmove', cancel);
+  el.addEventListener('mousedown', start);
+  el.addEventListener('mouseup', cancel);
+  el.addEventListener('mouseleave', cancel);
+  el.addEventListener('click', (e)=>{ if(fired){ e.preventDefault(); e.stopPropagation(); } }, true);
+}
+
+/* ===================== 책갈피(최대 5개, 이름 붙여 저장) ===================== */
+const BOOKMARK_MAX = 5;
+// 지금 화면 맨 위에 걸쳐 보이는 절 번호를 찾는다 (책갈피 저장 시 몇 절인지 함께 기록하기 위함)
+function getCurrentTopVerse(){
+  const scEl = document.getElementById('scripture');
+  if(!scEl) return null;
+  const containerTop = scEl.getBoundingClientRect().top;
+  const items = scEl.querySelectorAll('.verse[data-v], .verse-pair[data-v]');
+  for(const el of items){
+    const r = el.getBoundingClientRect();
+    if(r.bottom > containerTop + 4) return parseInt(el.dataset.v, 10);
+  }
+  return items.length ? parseInt(items[items.length-1].dataset.v, 10) : null;
+}
+function loadBookmarks(){
+  try{ return JSON.parse(localStorage.getItem('bible_mobile_bookmarks')||'[]'); }catch(_){ return []; }
+}
+function saveBookmarks(list){ localStorage.setItem('bible_mobile_bookmarks', JSON.stringify(list)); }
+function openBookmarkSheet(){
+  renderBookmarkList();
+  document.getElementById('bookmarkBackdrop').classList.add('show');
+  document.getElementById('bookmarkSheet').classList.add('show');
+}
+function closeBookmarkSheet(){
+  document.getElementById('bookmarkBackdrop').classList.remove('show');
+  document.getElementById('bookmarkSheet').classList.remove('show');
+}
+function renderBookmarkList(){
+  const list = loadBookmarks();
+  const addBtn = document.getElementById('bookmarkAddBtn');
+  addBtn.disabled = list.length >= BOOKMARK_MAX;
+  addBtn.textContent = list.length >= BOOKMARK_MAX ? '책갈피 5개 모두 사용 중 (삭제 후 저장 가능)' : '+ 현재 위치 저장';
+  const listEl = document.getElementById('bookmarkList');
+  if(list.length===0){
+    listEl.innerHTML = '<div class="bookmark-empty">아직 저장된 책갈피가 없습니다.</div>';
+    return;
+  }
+  listEl.innerHTML = list.map((b, i)=>{
+    return '<div class="bookmark-item" data-idx="'+i+'">'
+      + '<div class="bookmark-item-main" data-act="jump">'
+      +   '<span class="bookmark-item-ref">'+esc(b.label)+'</span>'
+      + '</div>'
+      + '<button class="bookmark-item-edit" data-act="rename" title="이름 수정">✎</button>'
+      + '<button class="bookmark-item-del" data-act="del" title="삭제">✕</button>'
+      + '</div>';
+  }).join('');
+}
+function addBookmark(){
+  const list = loadBookmarks();
+  if(list.length >= BOOKMARK_MAX){ alert('책갈피는 최대 '+BOOKMARK_MAX+'개까지 저장할 수 있습니다. 기존 책갈피를 삭제한 뒤 다시 저장해주세요.'); return; }
+  const verse = getCurrentTopVerse() || 1;
+  const ref = bookName(state.book)+' '+state.chapter+':'+verse;
+  list.push({book:state.book, chapter:state.chapter, verse:verse, label:ref, ts:Date.now()});
+  saveBookmarks(list);
+  renderBookmarkList();
+}
+function jumpToBookmark(idx){
+  const list = loadBookmarks();
+  const b = list[idx];
+  if(!b) return;
+  state.book = b.book; state.chapter = b.chapter;
+  closeBookmarkSheet(); updateLocBtn(); saveState(); recordVisit();
+  renderChapter().then(()=>{
+    if(b.verse==null) return;
+    document.querySelectorAll('.jump-highlight').forEach(el=> el.classList.remove('jump-highlight'));
+    const vEl = document.querySelector('.verse[data-v="'+b.verse+'"], .verse-pair[data-v="'+b.verse+'"]');
+    if(vEl){
+      vEl.scrollIntoView({block:'start'});
+      vEl.classList.add('jump-highlight');
+    }
+  });
+}
+function deleteBookmark(idx){
+  const list = loadBookmarks();
+  list.splice(idx, 1);
+  saveBookmarks(list);
+  renderBookmarkList();
+}
+function renameBookmark(idx, newLabel){
+  const list = loadBookmarks();
+  if(!list[idx]) return;
+  const b = list[idx];
+  b.label = (newLabel||'').trim() || (bookName(b.book)+' '+b.chapter+':'+(b.verse||1));
+  saveBookmarks(list);
+}
+
+/* ===================== 이벤트 바인딩 ===================== */
+function confirmLocSelection(){
+  state.book = pk.book; state.chapter = pk.chapter;
+  const targetVerse = pk.verse;
+  closeLocSheet(); updateLocBtn(); saveState(); recordVisit();
+  renderChapter().then(()=>{
+    document.querySelectorAll('.jump-highlight').forEach(el=> el.classList.remove('jump-highlight'));
+    const vEl = document.querySelector('.verse[data-v="'+targetVerse+'"], .verse-pair[data-v="'+targetVerse+'"]');
+    if(vEl){
+      vEl.scrollIntoView({block:'start'});
+      vEl.classList.add('jump-highlight');
+    }
+  });
+}
+/* ===================== 단어 검색 ===================== */
+function openSearchSheet(){
+  document.getElementById('searchBackdrop').classList.add('show');
+  document.getElementById('searchSheet').classList.add('show');
+  setTimeout(()=>{ document.getElementById('searchInput').focus(); }, 60);
+}
+function closeSearchSheet(){
+  document.getElementById('searchBackdrop').classList.remove('show');
+  document.getElementById('searchSheet').classList.remove('show');
+}
+async function runBibleSearch(){
+  const raw = document.getElementById('searchInput').value.trim();
+  const statusEl = document.getElementById('searchStatus');
+  const resultsEl = document.getElementById('searchResults');
+  if(!raw){ statusEl.textContent=''; resultsEl.innerHTML=''; return; }
+
+  statusEl.textContent = '검색 중…';
+  resultsEl.innerHTML = '';
+
+  const db = await loadBibleDB(state.mainKey);
+  if(!db){
+    statusEl.textContent = '검색할 성경 본문이 없습니다. 설정 ⚙ → 성경 번역본 불러오기에서 '+esc(state.mainKey)+'을(를) 등록해주세요.';
+    return;
+  }
+
+  let rows = [];
+  try{
+    const escapedForLike = raw.replace(/[\\%_]/g, ch=> '\\'+ch);
+    const res = db.exec(
+      "SELECT Book, Chapter, Verse, Scripture FROM Bible WHERE Scripture LIKE ? ESCAPE '\\' ORDER BY Book, Chapter, Verse LIMIT 300",
+      ['%'+escapedForLike+'%']
+    );
+    if(res.length) rows = res[0].values;
+  }catch(e){
+    console.error('성경 단어 검색 실패:', e);
+    statusEl.textContent = '검색 중 오류가 발생했습니다.';
+    return;
+  }
+
+  if(!rows.length){
+    statusEl.textContent = '"'+raw+'" 검색 결과가 없습니다.';
+    return;
+  }
+
+  searchHighlightWord = raw;
+  statusEl.textContent = esc(state.mainKey)+' · 총 '+rows.length+'건'+(rows.length>=300 ? ' (최대 300건까지 표시됩니다)' : '');
+  resultsEl.innerHTML = rows.map(r=>{
+    const book = r[0], chapter = r[1], verse = r[2], text = r[3];
+    const ref = bookName(book)+' '+chapter+':'+verse;
+    return '<div class="search-result-item" data-book="'+book+'" data-chapter="'+chapter+'" data-verse="'+verse+'">'
+      + '<div class="search-result-ref">'+esc(ref)+'</div>'
+      + '<div class="search-result-text">'+highlightMatches(esc(text), raw)+'</div>'
+      + '</div>';
+  }).join('');
+}
+function jumpToSearchResult(book, chapter, verse){
+  state.book = book; state.chapter = chapter;
+  closeSearchSheet(); updateLocBtn(); saveState(); recordVisit();
+  renderChapter().then(()=>{
+    document.querySelectorAll('.jump-highlight').forEach(el=> el.classList.remove('jump-highlight'));
+    const vEl = document.querySelector('.verse[data-v="'+verse+'"], .verse-pair[data-v="'+verse+'"]');
+    if(vEl){
+      vEl.scrollIntoView({block:'center'});
+      vEl.classList.add('jump-highlight');
+    }
+  });
+}
+
+function bindEvents(){
+  document.getElementById('homeBtn').onclick = goHomeApp;
+  document.getElementById('locBtn').onclick = openLocSheet;
+  document.getElementById('locBackdrop').onclick = closeLocSheet;
+  document.getElementById('locCancelBtn').onclick = closeLocSheet;
+  document.getElementById('locConfirmBtn').onclick = confirmLocSelection;
+  document.addEventListener('click', (e)=>{
+    const sheet = document.getElementById('locSheet');
+    if(!sheet.classList.contains('show')) return;
+    if(sheet.contains(e.target) || e.target.closest('#locBtn')) return;
+    closeLocSheet();
+  });
+  document.getElementById('pkRange').addEventListener('click', (e)=>{
+    const rangeBtn = e.target.closest('[data-range]');
+    const jumpBtn = e.target.closest('[data-jump]');
+    if(!rangeBtn && !jumpBtn) return;
+    e.stopPropagation();
+    if(rangeBtn){ pk.filter = rangeBtn.dataset.range; renderPkRange(); renderPkBook(); return; }
+    if(jumpBtn){
+      const b = parseInt(jumpBtn.dataset.jump);
+      const el = document.querySelector('#pkBook [data-book="'+b+'"]');
+      if(el) el.scrollIntoView({block:'center'});
+    }
+  });
+  document.getElementById('pkBook').addEventListener('click', (e)=>{
+    const cell = e.target.closest('[data-book]');
+    if(!cell) return;
+    e.stopPropagation();
+    pk.book = parseInt(cell.dataset.book); pk.chapter=1; pk.verse=1;
+    renderPkBook(); renderPkChapter(); renderPkVerse(); updatePkConfirmText();
+  });
+  document.getElementById('pkChapter').addEventListener('click', (e)=>{
+    const cell = e.target.closest('[data-chapter]');
+    if(!cell) return;
+    e.stopPropagation();
+    pk.chapter = parseInt(cell.dataset.chapter); pk.verse=1;
+    renderPkChapter(); renderPkVerse(); updatePkConfirmText();
+  });
+  document.getElementById('pkVerse').addEventListener('click', (e)=>{
+    const cell = e.target.closest('[data-verse]');
+    if(!cell) return;
+    e.stopPropagation();
+    pk.verse = parseInt(cell.dataset.verse);
+    renderPkVerse(); updatePkConfirmText();
+    confirmLocSelection();
+  });
+
+  document.getElementById('fontBtn').onclick = ()=> document.getElementById('fontPop').classList.toggle('show');
+  document.addEventListener('click', (e)=>{
+    const pop = document.getElementById('fontPop');
+    if(!pop.classList.contains('show')) return;
+    if(pop.contains(e.target) || e.target.closest('#fontBtn')) return;
+    pop.classList.remove('show');
+  });
+  document.getElementById('fontUp').onclick = ()=>{ state.fontSize=Math.min(28,state.fontSize+1); applyFontSize(); saveState(); };
+  document.getElementById('fontDown').onclick = ()=>{ state.fontSize=Math.max(14,state.fontSize-1); applyFontSize(); saveState(); };
+
+  document.getElementById('mainTransBtn').onclick = ()=>{
+    const menu = document.getElementById('mainTransMenu');
+    if(menu.classList.contains('show')){ closeMainTransMenu(); } else { openMainTransMenu(); }
+  };
+  document.getElementById('mainTransMenu').addEventListener('click', (e)=>{
+    const item = e.target.closest('[data-key]');
+    if(!item) return;
+    state.mainKey = item.dataset.key;
+    setMainTransBtnLabel();
+    saveState(); closeMainTransMenu(); renderChapter();
+  });
+  document.addEventListener('click', (e)=>{
+    const menu = document.getElementById('mainTransMenu');
+    if(!menu.classList.contains('show')) return;
+    if(menu.contains(e.target) || e.target.closest('#mainTransBtn')) return;
+    closeMainTransMenu();
+  });
+  document.getElementById('compareTransSel').onchange = (e)=>{ state.compareKey=e.target.value; saveState(); renderChapter(); };
+  document.getElementById('hymnBtn').onclick = ()=>{
+    navigateApp('./찬송가.html');
+  };
+
+  document.getElementById('settingsBtn').onclick = openSettingsSheet;
+  document.getElementById('settingsClose').onclick = closeSettingsSheet;
+  document.getElementById('settingsBackdrop').onclick = closeSettingsSheet;
+  document.getElementById('fileBible').onchange = (e)=>{ if(e.target.files.length) handleBibleFiles(e.target.files); e.target.value=''; };
+  document.getElementById('fileCmt').onchange = (e)=>{ if(e.target.files[0]) handleCmtFile(e.target.files[0]); e.target.value=''; };
+  document.getElementById('fileDict').onchange = (e)=>{ if(e.target.files.length) handleDictFiles(e.target.files); e.target.value=''; };
+  document.getElementById('bibleList').addEventListener('click', async (e)=>{
+    const btn = e.target.closest('[data-remove-bible]');
+    if(!btn) return;
+    await AppDB.remove(btn.dataset.removeBible);
+    const name = btn.dataset.removeBible.slice('bible:'.length);
+    delete BIBLE_DBS[name];
+    Object.keys(BIBLE_CHAPTER_CACHE).forEach(k=>{ if(k.indexOf(name+'_')===0) delete BIBLE_CHAPTER_CACHE[k]; });
+    await refreshSettingsLists(); await fillTransSelects();
+  });
+  document.getElementById('cmtList').addEventListener('click', async (e)=>{
+    if(!e.target.closest('[data-remove-cmt]')) return;
+    await AppDB.remove('commentary:mybible');
+    CMT_DB = null; CMT_CHAPTER_RANGES = null; Object.keys(CMT_CACHE).forEach(k=> delete CMT_CACHE[k]);
+    await refreshSettingsLists();
+  });
+  document.getElementById('dictList').addEventListener('click', async (e)=>{
+    const btn = e.target.closest('[data-remove-dict]');
+    if(!btn) return;
+    await AppDB.remove(btn.dataset.removeDict);
+    delete DICT_DBS[btn.dataset.removeDict]; DICT_DBS_LOADED = false;
+    await refreshSettingsLists();
+  });
+  document.getElementById('fontChoiceRow').addEventListener('click', (e)=>{
+    const btn = e.target.closest('[data-font]');
+    if(!btn) return;
+    state.fontChoice = btn.dataset.font;
+    saveState(); applyFontChoice(); renderFontChoices();
+  });
+  document.getElementById('compareModeRow').addEventListener('click', (e)=>{
+    const btn = e.target.closest('[data-compare]');
+    if(!btn) return;
+    state.compareOn = (btn.dataset.compare === 'double');
+    saveState(); renderCompareModeRow(); renderChapter();
+  });
+  document.getElementById('exportMemoBtn').onclick = exportMemos;
+
+  document.getElementById('searchBtn').onclick = openSearchSheet;
+  document.getElementById('searchBackdrop').onclick = closeSearchSheet;
+  document.getElementById('searchHandle').onclick = closeSearchSheet;
+  document.getElementById('searchGoBtn').onclick = runBibleSearch;
+  document.getElementById('searchInput').addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ e.preventDefault(); runBibleSearch(); }
+  });
+  document.getElementById('searchResults').addEventListener('click', (e)=>{
+    const item = e.target.closest('.search-result-item');
+    if(!item) return;
+    jumpToSearchResult(parseInt(item.dataset.book), parseInt(item.dataset.chapter), parseInt(item.dataset.verse));
+  });
+
+  document.getElementById('scripture').addEventListener('click', (e)=>{
+    const icon = e.target.closest('.cmt-icon');
+    if(icon){ openCmtSheet(parseInt(icon.dataset.cmtV)); return; }
+    const memoIcon = e.target.closest('.memo-icon');
+    if(memoIcon){ openMemoSheet(parseInt(memoIcon.dataset.memoV)); return; }
+    const vnumEl = e.target.closest('.vnum[data-vnum]');
+    if(vnumEl){ toggleVerseCopy(vnumEl); return; }
+    const vtextEl = e.target.closest('.vtext');
+    if(vtextEl){
+      const sel = window.getSelection();
+      if(sel && sel.toString().trim().length>0) return; // 드래그로 텍스트 선택 중이면 하이라이트 토글 안 함
+      const container = e.target.closest('.verse[data-v], .verse-pair[data-v]');
+      if(container){ toggleVerseHighlight(container); }
+    }
+  });
+  document.getElementById('cmtClose').onclick = closeCmtSheet;
+  document.getElementById('cmtBackdrop').onclick = closeCmtSheet;
+
+  document.addEventListener('selectionchange', ()=>{
+    clearTimeout(window.__selTimer);
+    window.__selTimer = setTimeout(handleSelection, 250);
+  });
+  document.getElementById('dictClose').onclick = hideDictPop;
+  document.addEventListener('touchstart', (e)=>{
+    if(!e.target.closest('#dictPop')) hideDictPop();
+  }, {passive:true});
+
+  document.getElementById('memoClose').onclick = closeMemoSheet;
+  document.getElementById('memoBackdrop').onclick = closeMemoSheet;
+  document.getElementById('memoSaveBtn').onclick = ()=>{
+    const v = parseInt(document.getElementById('memoVerseSel').value);
+    const t = document.getElementById('memoText').value.trim();
+    if(!t) return;
+    const list = loadMemos();
+    list.push({verse:v, text:t, ts:Date.now()});
+    saveMemos(list);
+    document.getElementById('memoText').value='';
+    renderMemoList();
+    updateMemoIcons();
+  };
+  document.getElementById('memoList').addEventListener('click', (e)=>{
+    const del = e.target.closest('.del');
+    if(!del) return;
+    const list = loadMemos();
+    list.splice(parseInt(del.dataset.i),1);
+    saveMemos(list);
+    renderMemoList();
+    updateMemoIcons();
+  });
+
+  document.getElementById('backBtn').onclick = goBackNav;
+  document.getElementById('forwardBtn').onclick = goForwardNav;
+  bindLongPress(document.getElementById('backBtn'), clearNavTrail);
+
+  document.getElementById('chapPrevBtn').onclick = ()=> goToChapter(-1);
+  document.getElementById('chapNextBtn').onclick = ()=> goToChapter(1);
+  bindChapterSwipe(document.getElementById('scripture'));
+
+  document.getElementById('bookmarkBtn').onclick = openBookmarkSheet;
+  document.getElementById('bookmarkClose').onclick = closeBookmarkSheet;
+  document.getElementById('bookmarkBackdrop').onclick = closeBookmarkSheet;
+  document.getElementById('bookmarkAddBtn').onclick = addBookmark;
+  document.getElementById('bookmarkList').addEventListener('click', (e)=>{
+    const item = e.target.closest('.bookmark-item');
+    if(!item) return;
+    const idx = parseInt(item.dataset.idx);
+    if(e.target.closest('[data-act="del"]')){
+      deleteBookmark(idx);
+      return;
+    }
+    if(e.target.closest('[data-act="rename"]')){
+      const list = loadBookmarks();
+      const cur = list[idx] ? list[idx].label : '';
+      const nv = prompt('책갈피 이름 수정', cur);
+      if(nv!==null){ renameBookmark(idx, nv); renderBookmarkList(); }
+      return;
+    }
+    if(e.target.closest('[data-act="jump"]')) jumpToBookmark(idx);
+  });
+}
+
+/* ===================== 초기화 ===================== */
+async function init(){
+  ensureSqlJs(); // 백그라운드로 미리 시작 (await 안 함) — 아래 작업들과 병렬 진행
+  loadState();
+  loadNavTrail();
+  applyFontChoice();
+  updateLocBtn();
+  updateNavButtons();
+  bindEvents();
+  // 번역본 드롭다운 채우기(fillTransSelects)와 본문 렌더링(renderChapter)은 서로 의존하지 않으므로
+  // 순차 대기하지 않고 동시에 진행한다 — 본문이 드롭다운 목록 때문에 지연되지 않게 함.
+  fillTransSelects();
+  await renderChapter();
+}
+init();
+</script>
+</body>
+</html>
